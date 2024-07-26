@@ -9,37 +9,42 @@ const seedsIds = lines[0]
 
 const givenMaps = lines.splice(1).filter((s) => s !== "");
 
-const maps: { [mapName: string]: { [id: number]: number } } = {};
+const maps: {
+  [mapName: string]: { source: number; destination: number; range: number }[];
+} = {};
 
 for (const givenMap of givenMaps) {
   const splitGivenMap = givenMap.split("\n").filter((s) => s !== "");
   const mapName = splitGivenMap[0].split(" ")[0].split("-to-").join("-");
 
-  const currentMap: { [id: number]: number } = {};
+  maps[mapName] = [];
 
   for (const map of splitGivenMap.slice(1)) {
-    const [destinationRangeStart, sourceRangeStart, rangeLength] = map
-      .split(" ")
-      .map((s) => parseInt(s));
+    const [destination, source, range] = map.split(" ").map((s) => parseInt(s));
 
-    for (let i = 0; i < rangeLength; i++) {
-      currentMap[sourceRangeStart + i] = destinationRangeStart + i;
-    }
+    maps[mapName].push({
+      source,
+      destination,
+      range,
+    });
   }
-
-  maps[mapName] = currentMap;
 }
 
 let nextIds = seedsIds.slice();
-for (const mapKey in maps) {
-  const currentMap = maps[mapKey];
+for (const mapName in maps) {
+  const currentMap = maps[mapName];
   const newIds: number[] = [];
   for (const id of nextIds) {
-    if (currentMap) {
-      let newId = currentMap[id];
-      if (!newId) newId = id;
-      newIds.push(newId);
+    let newId = id;
+    for (const map of currentMap) {
+      const { source, destination, range } = map;
+
+      if (source <= id && id < source + range) {
+        newId = id - source + destination;
+        break;
+      }
     }
+    newIds.push(newId);
   }
   nextIds = newIds.slice();
 }
